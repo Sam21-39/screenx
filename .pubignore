@@ -1,0 +1,27 @@
+# CI configuration
+.github/
+
+# n8n workflow skeletons (tooling, not part of the package)
+n8n/
+
+# Shell scripts
+*.sh
+
+# Editor config
+.vscode/
+.idea/
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Build artefacts
+build/
+.dart_tool/
+
+# Example app — native platform scaffolding (not relevant to package consumers)
+example/android/
+example/ios/
+example/web/
+example/.dart_tool/
+example/build/

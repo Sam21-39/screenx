@@ -1,0 +1,31 @@
+name: screenx
+description: >-
+  Centralised responsive configuration for Flutter — adaptive breakpoints,
+  sp/dp converters, and ScreenXLayout widget for Android, iOS, and Web.
+  One init, fully responsive.
+version: 1.0.0
+homepage: https://github.com/Sam21-39/screenx
+repository: https://github.com/Sam21-39/screenx
+issue_tracker: https://github.com/Sam21-39/screenx/issues
+documentation: https://pub.dev/documentation/screenx/latest/
+
+topics:
+  - responsive
+  - layout
+  - ui
+  - screen
+  - flutter
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  pana: ^0.22.0
+  very_good_analysis: ^6.0.0

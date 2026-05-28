@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Format · Analyze · Test · Pana
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Static analysis
+        run: dart analyze --fatal-infos
+
+      - name: Tests with coverage
+        run: flutter test --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+
+      - name: Install pana
+        run: dart pub global activate pana
+
+      - name: Pana score gate (PR threshold ≥ 110)
+        run: |
+          score=$(dart pub global run pana --no-warning --json 2>/dev/null | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); print(d['scores']['grantedPoints'])")
+          echo "pana score: $score"
+          if [ "$score" -lt 110 ]; then
+            echo "::error::Pana score $score is below the PR merge threshold of 110."
+            exit 1
+          fi
+
