@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
 
   # Manual trigger with option to skip pub.dev publish.
   # Use skip_publish: true for the very first release — publish that one
@@ -12,13 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       skip_publish:
-        description: 'Skip dart pub publish (true = initial release dry-run)'
+        description: 'Skip pub.dev publish (true = initial release)'
         required: false
         default: 'false'
-
-permissions:
-  contents: write   # create GitHub Release
-  id-token: write   # OIDC token for pub.dev
 
 jobs:
   # ── 1. Validate ────────────────────────────────────────────────────────────
@@ -26,13 +22,11 @@ jobs:
     name: Format · Analyze · Test · Pana
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
 
       - uses: subosito/flutter-action@v2
         with:
@@ -67,40 +61,23 @@ jobs:
             exit 1
           fi
 
-  # ── 2. Publish to pub.dev (OIDC) ───────────────────────────────────────────
+  # ── 2. Publish to pub.dev via official dart-lang reusable workflow ──────────
   publish:
     name: Publish to pub.dev
     needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # Skipped for the initial release. After the first manual publish and OIDC
-    # setup on pub.dev, this runs automatically on every tag push.
     if: ${{ github.event.inputs.skip_publish != 'true' }}
+    permissions:
+      id-token: write # Required for OIDC authentication
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
 
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: stable
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Publish to pub.dev (OIDC)
-        run: dart pub publish --force
-
-  # ── 3. GitHub Release + Slack ──────────────────────────────────────────────
+  # ── 3. GitHub Release ──────────────────────────────────────────────────────
   github-release:
     name: Create GitHub Release
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -110,4 +87,3 @@ jobs:
         with:
           generate_release_notes: true
           tag_name: ${{ github.ref_name }}
-
