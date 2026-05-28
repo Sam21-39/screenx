@@ -17,9 +17,29 @@ on:
         default: 'false'
 
 jobs:
+  # ── 0. Guard — only proceed if the tag was pushed from main ────────────────
+  guard:
+    name: Verify tag is from main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Confirm commit is reachable from main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tags must be created from main. This commit is not on main."
+            exit 1
+          fi
+
   # ── 1. Validate ────────────────────────────────────────────────────────────
   validate:
     name: Format · Analyze · Test · Pana
+    needs: guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
